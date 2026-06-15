@@ -11,25 +11,24 @@
 
 import Foundation
 import ScreenCaptureKit
+import AppKit
 
 class GeminiService {
     struct GeminiResponse: Codable {
         let candidates: [Candidate]
     }
-
     struct Candidate: Codable {
         let content: Content
     }
-
     struct Content: Codable {
         let parts: [Part]
     }
-
     struct Part: Codable {
         let text: String
     }
     
-    func callGemini(prompt: NSImage) async throws -> String{
+    /// 💡 修正：画像（image）をオプション（あってもなくても良い）にし、テキストの質問（textPrompt）を受け取る
+    func callGemini(textPrompt: String, image: NSImage?) async throws -> String {
         let apiKey = Bundle.main.infoDictionary?["GEMINI_API_KEY"] as? String ?? ""
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(apiKey)")!
         
@@ -37,33 +36,36 @@ class GeminiService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // NSImage -> cgImage -> pngDataに変換
-        guard let cgImage = prompt.cgImage(forProposedRect: nil, context: nil, hints: nil),
-              let pngData = NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:]) else {
-            throw NSError()
+        // 1. まずはテキスト用のパーツを作成
+        var partsArray: [[String: Any]] = [
+            ["text": textPrompt.isEmpty ? "画像の内容を日本語で詳しく解説してください。" : textPrompt]
+        ]
+        
+        // 2. 💡 もし画像がある場合は、画像をbase64に変換してパーツに追加する（なければスキップ！）
+        if let inputImage = image {
+            if let cgImage = inputImage.cgImage(forProposedRect: nil, context: nil, hints: nil),
+               let pngData = NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:]) {
+                let base64String = pngData.base64EncodedString()
+                let imagePart: [String: Any] = [
+                    "inline_data": [
+                        "mime_type": "image/png",
+                        "data": base64String
+                    ]
+                ]
+                partsArray.append(imagePart) // 配列に合流させる
+            }
         }
         
-        // pngData -> base64 に変換
-        let base64String = pngData.base64EncodedString()
-        
-        // 送信データ定義
+        // 送信データの組み立て
         let body: [String: Any] = [
             "contents": [
                 [
-                    "parts": [
-                        [
-                            "inline_data": [
-                                "mime_type": "image/png",
-                                "data": base64String
-                            ]
-                        ]
-                    ]
+                    "parts": partsArray
                 ]
             ],
             "systemInstruction": [
                 "parts": [
-                    // プロンプト
-                    ["text": "画像の内容を日本語で詳しく解説してください。"]
+                    ["text": "あなたはMacの画面解析をサポートする有能なAIアシスタントです。質問に対して簡潔かつ正確に日本語で答えてください。"]
                 ]
             ],
             "generationConfig": [
@@ -84,14 +86,8 @@ class GeminiService {
                 }
             }
             
-            let apiKey = Bundle.main.infoDictionary?["GEMINI_API_KEY"] as? String ?? ""
-            
-            if let rawString = String(data: data, encoding: .utf8) {
-                print(rawString)
-            }
-            
             let decoded = try JSONDecoder().decode(GeminiResponse.self, from: data)
-            return decoded.candidates.first?.content.parts.first?.text ?? "空"
+            return decoded.candidates.first?.content.parts.first?.text ?? "返答が空でした"
         } catch {
             return "エラー: \(error.localizedDescription)"
         }

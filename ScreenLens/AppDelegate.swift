@@ -4,33 +4,27 @@
 //
 //  Created by h S. on 2026/05/10.
 //
-
 import Cocoa
-// MARK: - サービスメニューから呼ばれる関数
-// 右クリック ->「画像を解析する」で起動
-// スクショ -> Gemini送信 -> 削除の流れを管理する
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    var appState: AppState?
+
+    @objc func analyzeScreenWrapper() {
+        guard let state = self.appState else { return }
+        analyzeScreen(appState: state) { }
+    }
+
     func analyzeScreen(appState: AppState, openWindow: @escaping () -> Void) {
+        self.appState = appState
         let screenshot = ScreenshotService()
-        let service = GeminiService()
         
+        // 1. スクショを撮影（tempフォルダ内に保存される）
         let path = screenshot.takeScreenshot()
-        guard let image = screenshot.loadImage(path: path) else { return }
-        defer {
-            screenshot.deleteTemp(path: path)
-        }
         
-        Task{
-            do {
-                let result = try await service.callGemini(prompt: image)
-                await MainActor.run{
-                    appState.result = result
-                    openWindow()
-                }
-            } catch {
-                print("エラー：\(error)")
-            }
+        DispatchQueue.main.async {
+            // 2. パスをそのまま受け渡す
+            appState.startNewSession(imagePath: path)
+            openWindow()
         }
     }
 }
