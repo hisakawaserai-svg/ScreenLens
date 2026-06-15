@@ -8,17 +8,35 @@
 import SwiftUI
 
 struct ContentView: View {
+    var appState: AppState
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            HStack {
+                Image(systemName: "magnifyingglass")
+                Text("ScreenLens")
+                    .font(.headline)
+                Spacer()
+            }
+            .padding()
+            
+            ScrollView {
+                Text(appState.result.isEmpty ? "ここに解析結果が表示されます" : appState.result)
+                    .textSelection(.enabled)
+                    .padding()
+                    .frame(maxWidth: .infinity,  alignment: .leading)
+            }
+            
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(appState.result, forType: .string)
+            } label: {
+                Label("コピー", systemImage: "doc.on.doc")
+            }
+            .padding()
         }
-        .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(appState: AppState())
 }
