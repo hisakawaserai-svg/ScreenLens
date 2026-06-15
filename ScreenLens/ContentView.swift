@@ -358,6 +358,7 @@ struct NSGradientLayerViewWrapper: NSViewRepresentable {
         animation.repeatCount = .infinity // 無限ループ
         animation.isRemovedOnCompletion = false // 画面が切り替わっても破棄しない
         
+        gradientLayer.locations = [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
         // レイヤーにアニメーションを追加
         gradientLayer.add(animation, forKey: "smoothGoogleScroll")
         
