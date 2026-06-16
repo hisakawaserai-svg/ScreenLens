@@ -7,6 +7,7 @@
 import Foundation
 import Combine
 import AppKit
+import SwiftUI
 
 struct ChatMessage: Identifiable {
     let id = UUID()
@@ -63,5 +64,13 @@ class AppState: ObservableObject {
         
         messages.removeAll()
         pendingImageUrl = nil
+    }
+
+    func deleteMessage(at offsets: IndexSet) {
+        messages.remove(atOffsets: offsets)
+    }
+
+    func deleteAllMessages() {
+        messages.removeAll()
     }
 }

@@ -6,25 +6,24 @@
 //
 import Cocoa
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var appState: AppState?
 
-    @objc func analyzeScreenWrapper() {
-        guard let state = self.appState else { return }
-        analyzeScreen(appState: state) { }
+    func openWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = NSApplication.shared.windows.first {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        }
     }
 
-    func analyzeScreen(appState: AppState, openWindow: @escaping () -> Void) {
+    func analyzeScreen(appState: AppState, onComplete: @escaping () -> Void) {
         self.appState = appState
-        let screenshot = ScreenshotService()
-        
-        // 1. スクショを撮影（tempフォルダ内に保存される）
-        let path = screenshot.takeScreenshot()
+        let path = ScreenshotService().takeScreenshot()
         
         DispatchQueue.main.async {
-            // 2. パスをそのまま受け渡す
             appState.startNewSession(imagePath: path)
-            openWindow()
+            onComplete() // 完了したらApp側で開く
         }
     }
 }

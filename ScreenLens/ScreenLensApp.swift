@@ -50,9 +50,14 @@ struct ScreenLensApp: App {
     /// 開いたウインドウを検知して、最小＆半透明にする処理
     private func configureMacWindow() {
         DispatchQueue.main.async {
-            // 1. ウィンドウを特定し、identifierを明示的に付与しておく
-            guard let window = NSApplication.shared.windows.first(where: { $0.titleVisibility == .hidden }) else { return }
-            window.identifier = NSUserInterfaceItemIdentifier("main")
+            guard let window = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "main" }) else { return }
+            
+            window.isMovableByWindowBackground = true
+            window.ignoresMouseEvents = false
+            window.level = .floating
+            
+            window.hidesOnDeactivate = false
+            window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
             
             // 2. 座標計算
             if let screen = NSScreen.main {

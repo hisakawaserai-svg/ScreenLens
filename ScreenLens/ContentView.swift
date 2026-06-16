@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var toastTimer: Timer? = nil
     
     @State private var isShowingSettings = false
+    @State private var isResizing: Bool = false
     var body: some View {
         // 画面全体のサイズを監視して、全画面（リサイズ）を検知する
         GeometryReader { outerGeometry in
@@ -47,6 +48,13 @@ struct ContentView: View {
                                     ForEach(appState.messages) { message in
                                         messageRow(for: message)
                                             .id(message.id)
+                                            .contextMenu { // 右クリックで削除メニューを出す
+                                                Button("このメッセージを削除") {
+                                                    if let index = appState.messages.firstIndex(where: { $0.id == message.id }) {
+                                                        appState.deleteMessage(at: IndexSet(integer: index))
+                                                    }
+                                                }
+                                            }
                                     }
                                 }
                             }
@@ -57,9 +65,12 @@ struct ContentView: View {
                         // 中央寄せの配置
                         .frame(maxWidth: .infinity)
                         .onChange(of: appState.messages.count) { _ in
+                            // メッセージが追加された直後のタイミング
                             if let lastId = appState.messages.last?.id {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                    proxy.scrollTo(lastId, anchor: .bottom)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                        proxy.scrollTo(lastId, anchor: .bottom)
+                                    }
                                 }
                             }
                         }
@@ -101,6 +112,12 @@ struct ContentView: View {
         .sheet(isPresented: $isShowingSettings) {
             SettingsView(appState: appState)
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResizeNotification)) { _ in
+            isResizing = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isResizing = false
+            }
+        }
     }
     
     // ーーー ヘッダー ーーー
@@ -116,6 +133,8 @@ struct ContentView: View {
                 .foregroundColor(.white)
             Spacer()
             
+            if appState.isProcessing || isSending { ProgressView().scaleEffect(0.7) }
+            
             HStack {
                 Spacer()
                 Menu {
@@ -127,6 +146,11 @@ struct ContentView: View {
                         clearTempDirectory()
                         showToast(message: "キャッシュを削除しました")
                     })
+                    Button("履歴をすべて削除", role: .destructive) {
+                        withAnimation {
+                            appState.deleteAllMessages()
+                        }
+                    }
                     Divider()
                     Button("APIキーを設定") {
                         isShowingSettings = true
@@ -137,8 +161,6 @@ struct ContentView: View {
                 }
                 .menuStyle(.borderlessButton)
             }
-
-            if appState.isProcessing || isSending { ProgressView().scaleEffect(0.7) }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
@@ -190,29 +212,49 @@ struct ContentView: View {
                         }
                     }
                 }
-                
                 if !message.text.isEmpty {
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
                         Text(message.text)
-                            .font(.system(.body, design: .rounded)).lineSpacing(5).textSelection(.enabled).padding(.vertical, 10).padding(.horizontal, 14)
+                            .font(.system(.body, design: .rounded))
+                            .lineSpacing(5)
+                            .textSelection(.enabled)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 14)
                             .foregroundColor(.white)
                             .background(
                                 message.isUser ?
                                 AnyView(Color.accentColor.opacity(0.9)) :
-                                AnyView(Color.black.opacity(0.4))
+                                    AnyView(Color.black.opacity(0.4))
                             )
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.white.opacity(message.isUser ? 0.25 : 0.1), lineWidth: 1)
                             )
+                            .drawingGroup()
                         
-                        Button {
-                            copyTextToPasteboard(text: message.text)
-                            showToast(message: "返答をコピーしたよ")
-                        } label: {
-                            Image(systemName: "doc.on.doc").font(.caption2).foregroundColor(.white.opacity(0.3))
-                        }.buttonStyle(.plain).padding(.trailing, 4)
+                        HStack(spacing: 12) {
+                            if message.isUser { Spacer() }
+                            
+                            Button {
+                                copyTextToPasteboard(text: message.text)
+                                showToast(message: "返答をコピーしたよ")
+                            } label: {
+                                Image(systemName: "doc.on.doc").font(.caption2).foregroundColor(.white.opacity(0.3))
+                            }.buttonStyle(.plain)
+                            
+                            Button {
+                                if let index = appState.messages.firstIndex(where: { $0.id == message.id }) {
+                                    withAnimation { appState.deleteMessage(at: IndexSet(integer: index)) }
+                                    showToast(message: "メッセージを削除したよ")
+                                }
+                            } label: {
+                                Image(systemName: "trash").font(.caption2).foregroundColor(.white.opacity(0.3))
+                            }.buttonStyle(.plain)
+                            
+                            if !message.isUser { Spacer() }
+                        }
+                        .padding(.horizontal, 4)
                     }
                 }
             }
@@ -240,8 +282,13 @@ struct ContentView: View {
                         
                         } label: { Image(systemName: "xmark.circle.fill").foregroundColor(.white).background(Color.black.clipShape(Circle())) }.buttonStyle(.plain).offset(x: 5, y: -5)
                     }
-                    Text("送信待ちのスクショ").font(.caption).foregroundColor(.white.opacity(0.6))
                     Spacer()
+                    Button {
+                        copyImageToPasteboard(image: pendingImage)
+                        showToast(message: "画像をクリップボードにコピーしました")
+                    } label: {
+                        Label("コピー", systemImage: "doc.on.clipboard")
+                    }
                 }
                 .padding(.horizontal, 16)
             }
@@ -278,8 +325,14 @@ struct ContentView: View {
         return (isInputNotEmpty || isImagePresent) && !isSending
     }
     
-    private func captureFromWindow() { appDelegate.analyzeScreen(appState: appState, openWindow: {}) }
-
+    private func captureFromWindow() {
+        appDelegate.analyzeScreen(appState: appState) {
+            NSApp.activate(ignoringOtherApps: true)
+            if let window = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "main" }) {
+                window.makeKeyAndOrderFront(nil)
+            }
+        }
+    }
     private func sendEverything() {
         guard !inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || appState.pendingImageUrl != nil else {
                 return
@@ -358,10 +411,8 @@ struct NSGradientLayerViewWrapper: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let containerView = NSView()
         
-        // 1. グラデーションを表示するレイヤー（CAGradientLayer）を作成
         let gradientLayer = CAGradientLayer()
         
-        // Googleの4色を2周期分並べる（晴来さんのアイデア：倍分のColorを用意）
         gradientLayer.colors = [
             NSColor(red: 0.26, green: 0.52, blue: 0.96, alpha: 1.0).cgColor, // 青
             NSColor(red: 0.92, green: 0.26, blue: 0.21, alpha: 1.0).cgColor, // 赤
