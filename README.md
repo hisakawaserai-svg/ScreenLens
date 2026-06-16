@@ -10,6 +10,11 @@
 | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | <img width="400" alt="送信前" src="https://github.com/user-attachments/assets/f138a013-a1c3-4596-b905-e246768a993f" /> | <img width="400" alt="送信後" src="https://github.com/user-attachments/assets/fd53e97d-cbc9-4498-b29b-bdc1272929a6" /> |
 
+## ⭐ 動作環境
+
+- macOS 15 以上
+- Xcode 26 以上
+  
 ---
 
 ## 💡 開発の背景
@@ -42,6 +47,30 @@ Gemini API を利用して、スクリーンショットの内容を解析しま
 
 ---
 
+## ⚙️ インストール
+
+1. リポジトリをクローン
+2. Xcodeで開く
+3. Build & Run
+
+### 補足
+
+アプリとして書き出したい場合は、
+Product → Archive → Distribute App → Custom → Copy App
+から .app を生成できます。
+
+---
+
+## 🔑 APIキー設定
+
+1. Google AI Studio (https://aistudio.google.com/api-keys) で Gemini API Key を発行
+2. アプリ右上の ⚙️ をクリック
+3. 「APIキーを設定」を選択
+4. APIキーを入力
+5. 自動保存されます
+
+---
+
 ## 📖 使い方
 
 1. カメラボタン、またはメニューバーの「画像を解析する」を選択します。
@@ -64,21 +93,13 @@ Gemini API を利用して、スクリーンショットの内容を解析しま
 
 ---
 
-## ⚙️ インストール
-
-1. リポジトリをクローン
-2. Xcodeで開く
-3. Build & Run
-4. Gemini API Keyを設定
----
-
 ## 🛠️ 技術スタック
 
 | 項目           | 内容                      |
 | ------------ | ----------------------- |
 | Language     | Swift                   |
 | UI Framework | SwiftUI                 |
-| AI Model     | Gemini                  |
+| AI Model     | Gemini 2.5 Flash        |
 | API          | Google Gemini API       |
 | Development  | AI-assisted Development |
 
