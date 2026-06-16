@@ -2,3 +2,4 @@ Secrets.xcconfig
 *.xcuserdatad/
 *.xcbreakpointslist
 xcuserdata/
+.DS_Store
