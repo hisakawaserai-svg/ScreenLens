@@ -1,6 +1,10 @@
 #ScreenLens
 スクリーンショットを即座に Gemini で解析する、macOS 用の生産性向上ツールです。
 
+##画面
+<img width="420" height="648" alt="送信前" src="https://github.com/user-attachments/assets/f138a013-a1c3-4596-b905-e246768a993f" />
+<img width="420" height="650" alt="送信後" src="https://github.com/user-attachments/assets/fd53e97d-cbc9-4498-b29b-bdc1272929a6" />
+
 ##💡 背景
 日々の React Native 開発において、「画面のキャプチャから素早く AI に意図や問題を伝えたい」というニーズから生まれました。Swift のネイティブな操作性が必要だったため、AI とのペアプログラミングを通じて実装された実験的プロジェクトです。
 
