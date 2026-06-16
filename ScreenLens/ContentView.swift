@@ -113,6 +113,26 @@ struct ContentView: View {
                 .fontWeight(.bold)
                 .foregroundColor(.white)
             Spacer()
+            
+            HStack {
+                Spacer()
+                Menu {
+                    Button("保存フォルダを開く", action: {
+                        let tempDir = FileManager.default.temporaryDirectory
+                        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: tempDir.path)
+                    })
+                    Button("キャッシュ削除", action: {
+                        clearTempDirectory()
+                        showToast(message: "キャッシュを削除しました")
+                    })
+                } label: {
+                    Image(systemName: "gearshape.fill") // 設定アイコン
+                        .foregroundColor(.white.opacity(0.3))
+                }
+                .menuStyle(.borderlessButton)
+            }
+            .padding(.trailing, 16)
+
             if appState.isProcessing || isSending { ProgressView().scaleEffect(0.7) }
         }
         .padding(.horizontal, 20)
@@ -403,5 +423,22 @@ struct ScreenLensVisualEffect: NSViewRepresentable {
     func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
         nsView.material = material
         nsView.blendingMode = blendingMode
+    }
+}
+
+func clearTempDirectory() {
+    let fileManager = FileManager.default
+    let tempDir = fileManager.temporaryDirectory
+    
+    do {
+        let fileURLs = try fileManager.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
+        for url in fileURLs {
+            // これにより「ScreenLens_2026...」のような名前のファイルだけが対象になる
+            if url.lastPathComponent.hasPrefix("ScreenLens_") {
+                try fileManager.removeItem(at: url)
+            }
+        }
+    } catch {
+        print("キャッシュ削除失敗: \(error)")
     }
 }
