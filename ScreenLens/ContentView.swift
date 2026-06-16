@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var toastMessage: String = ""
     @State private var toastTimer: Timer? = nil
     
+    @State private var isShowingSettings = false
     var body: some View {
         // 画面全体のサイズを監視して、全画面（リサイズ）を検知する
         GeometryReader { outerGeometry in
@@ -97,6 +98,9 @@ struct ContentView: View {
         }
         .frame(minWidth: 420, minHeight: 620)
         .contentShape(Rectangle())
+        .sheet(isPresented: $isShowingSettings) {
+            SettingsView(appState: appState)
+        }
     }
     
     // ーーー ヘッダー ーーー
@@ -123,6 +127,10 @@ struct ContentView: View {
                         clearTempDirectory()
                         showToast(message: "キャッシュを削除しました")
                     })
+                    Divider()
+                    Button("APIキーを設定") {
+                        isShowingSettings = true
+                    }
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.white.opacity(0.3))
@@ -435,5 +443,27 @@ func clearTempDirectory() {
         }
     } catch {
         print("キャッシュ削除失敗: \(error)")
+    }
+}
+
+// 設定用のViewパーツ
+struct SettingsView: View {
+    @ObservedObject var appState: AppState
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        Form {
+            Section(header: Text("Gemini API 設定")) {
+                SecureField("Gemini API Key", text: $appState.apiKey)
+                Text("入力されたキーはローカルに安全に保存されます。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .frame(width: 400, height: 150)
+        .toolbar {
+            Button("閉じる") { dismiss() }
+        }
     }
 }

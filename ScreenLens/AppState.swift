@@ -25,6 +25,12 @@ class AppState: ObservableObject {
     // 送信前のスクショも「URL」で保持
     @Published var pendingImageUrl: URL?
     
+    @Published var apiKey: String = UserDefaults.standard.string(forKey: "gemini_api_key") ?? "" {
+        didSet {
+            UserDefaults.standard.set(apiKey, forKey: "gemini_api_key")
+        }
+    }
+    
     /// セッション開始時の処理
     func startNewSession(imagePath: String) {
         // 文字列のパスをURLに変換してキープ

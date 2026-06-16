@@ -14,6 +14,18 @@ import ScreenCaptureKit
 import AppKit
 
 class GeminiService {
+    private let apiKey: String
+
+    // Allow injecting API key; fallback to UserDefaults if not provided
+    init(apiKey: String? = nil) {
+        if let apiKey = apiKey, !apiKey.isEmpty {
+            self.apiKey = apiKey
+        } else {
+            // Read from UserDefaults where SettingsView presumably stores it
+            self.apiKey = UserDefaults.standard.string(forKey: "gemini_api_key") ?? ""
+        }
+    }
+    
     struct GeminiResponse: Codable {
         let candidates: [Candidate]
     }
@@ -29,8 +41,7 @@ class GeminiService {
     
     /// 画像（image）をオプション（あってもなくても良い）にし、テキストの質問（textPrompt）を受け取る
     func callGemini(textPrompt: String, image: NSImage?) async throws -> String {
-        // この部分を自分のgeminiAPIキーに変更してください
-        let apiKey = Bundle.main.infoDictionary?["GEMINI_API_KEY"] as? String ?? ""
+        let apiKey = self.apiKey
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(apiKey)")!
         
         var request = URLRequest(url: url)
@@ -94,3 +105,4 @@ class GeminiService {
         }
     }
 }
+
