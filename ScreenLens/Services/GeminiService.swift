@@ -1,13 +1,13 @@
 //
 //  GeminiService.swift
-//  AIAssistant
+//  ScreenLens
 //
 //  Created by h S. on 2026/05/08.
 //
 
 // MARK: - GeminiService
 // 役割: Gemini APIとの通信を行うサービスクラス
-// 使い方： GeminiService().GeminiResponse(prompt: "質問")で呼び出す
+// 使い方： GeminiService().GeminiResponse(prompt: "質問" + image: NSImage)で呼び出す
 
 import Foundation
 import ScreenCaptureKit
@@ -27,8 +27,9 @@ class GeminiService {
         let text: String
     }
     
-    /// 💡 修正：画像（image）をオプション（あってもなくても良い）にし、テキストの質問（textPrompt）を受け取る
+    /// 画像（image）をオプション（あってもなくても良い）にし、テキストの質問（textPrompt）を受け取る
     func callGemini(textPrompt: String, image: NSImage?) async throws -> String {
+        // この部分を自分のgeminiAPIキーに変更してください
         let apiKey = Bundle.main.infoDictionary?["GEMINI_API_KEY"] as? String ?? ""
         let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(apiKey)")!
         
@@ -41,7 +42,7 @@ class GeminiService {
             ["text": textPrompt.isEmpty ? "画像の内容を日本語で詳しく解説してください。" : textPrompt]
         ]
         
-        // 2. 💡 もし画像がある場合は、画像をbase64に変換してパーツに追加する（なければスキップ！）
+        // 2. もし画像がある場合は、画像をbase64に変換してパーツに追加する（なければスキップ！）
         if let inputImage = image {
             if let cgImage = inputImage.cgImage(forProposedRect: nil, context: nil, hints: nil),
                let pngData = NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:]) {

@@ -10,12 +10,12 @@ import SwiftUI
 @main
 struct ScreenLensApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    // 💡 元のコード通り、StateObjectとして管理
+
     @StateObject var appState = AppState()
     @Environment(\.openWindow) var openWindow
     
     var body: some Scene {
-        // 1. メニーバー常駐の設定（元の綺麗な設計をキープ！）
+        // 1. メニーバー常駐の設定
         MenuBarExtra("ScreenLens", systemImage: "camera") {
             Button("アプリを開く") {
                 // 既存のウィンドウを探す
@@ -27,7 +27,7 @@ struct ScreenLensApp: App {
                         openWindow(id: "main")
                     }
                 }
-            Divider() // 区切り線
+            Divider()
             Button("画像を解析する") {
                 appDelegate.analyzeScreen(appState: appState) {
                     openWindow(id: "main")
@@ -35,7 +35,7 @@ struct ScreenLensApp: App {
             }
         }
         
-        // 2. 解析結果を表示するウインドウ（ここをおしゃれに大改造）
+        // 2. 解析結果を表示するウインドウ
         WindowGroup(id: "main") {
             ContentView(appState: appState, appDelegate: appDelegate)
                 .background(VisualEffectView().ignoresSafeArea())
@@ -47,7 +47,7 @@ struct ScreenLensApp: App {
         .windowResizability(.contentSize)
     }
     
-    /// 開いたウインドウを検知して、右縦半分＆半透明にする処理
+    /// 開いたウインドウを検知して、最小＆半透明にする処理
     private func configureMacWindow() {
         DispatchQueue.main.async {
             // 1. ウィンドウを特定し、identifierを明示的に付与しておく
@@ -58,10 +58,10 @@ struct ScreenLensApp: App {
             if let screen = NSScreen.main {
                 let screenRect = screen.visibleFrame
                 let newWidth: CGFloat = 420
-                let newHeight: CGFloat = 620 // 最小値を初期値として使うのが最も安定します
+                let newHeight: CGFloat = 620
                 
                 let newX = screenRect.maxX - newWidth
-                let newY = screenRect.maxY - newHeight // 上から配置することで画面外にはみ出しません
+                let newY = screenRect.maxY - newHeight
                 
                 // 3. サイズと位置を強制適用
                 window.setFrame(NSRect(x: newX, y: newY, width: newWidth, height: newHeight), display: true, animate: true)

@@ -11,7 +11,7 @@ import AppKit
 
 class ScreenshotService {
     
-    /// 💡 アプリ専用の一時キャッシュフォルダのURLを取得・作成する関数
+    /// アプリ専用の一時キャッシュフォルダのURLを取得・作成する関数
     private var cacheDirectoryURL: URL {
         // Macの共通tempフォルダの場所を取得
         let systemTemp = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
@@ -32,7 +32,6 @@ class ScreenshotService {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
         
-        // 💡 【バグ修正・プロ仕様化】
         // 専用フォルダの直下に、毎回絶対に被らないランダムなID（UUID）をファイル名にして指定する
         let uniqueFileName = "screenshot_\(UUID().uuidString).png"
         let tempFileURL = cacheDirectoryURL.appendingPathComponent(uniqueFileName)

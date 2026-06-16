@@ -20,23 +20,21 @@ struct ContentView: View {
     @State private var toastTimer: Timer? = nil
     
     var body: some View {
-        // 💡 画面全体のサイズを監視して、全画面（リサイズ）を検知する
+        // 画面全体のサイズを監視して、全画面（リサイズ）を検知する
         GeometryReader { outerGeometry in
             // 横幅が 900px を超えたら「全画面（または最大化）」と判定するフラグ
             let isFullScreen = outerGeometry.size.width > 900
             
             ZStack {
-                // 💡 解決策：サイズに応じて背景を動的に切り替える
+                // サイズに応じて背景を動的に切り替える
                 (isFullScreen ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color.black.opacity(0.15))
                         .ignoresSafeArea()
                         .animation(.easeInOut(duration: 0.5), value: isFullScreen)
                 
                 VStack(spacing: 0) {
-                    // ヘッダー（全画面の時は少し不透明度を上げるか、そのままでもHUDなら締まります）
                     headerView
                         .background(ScreenLensVisualEffect(material: .hudWindow, blendingMode: .withinWindow))
                     
-                    // 何があっても絶対にキレない最強のネオンDivider
                     NeonLaserDivider()
                     
                     ScrollViewReader { proxy in
@@ -52,7 +50,7 @@ struct ContentView: View {
                                 }
                             }
                             .padding()
-                            // 💡 全画面の時はタイムラインが広がりすぎないように最大幅を制限して中央寄せする（UX向上）
+                            // 全画面の時はタイムラインが広がりすぎないように最大幅を制限して中央寄せする（UX向上）
                             .frame(maxWidth: isFullScreen ? 800 : .infinity)
                         }
                         // 中央寄せの配置
@@ -126,7 +124,7 @@ struct ContentView: View {
                         showToast(message: "キャッシュを削除しました")
                     })
                 } label: {
-                    Image(systemName: "gearshape.fill") // 設定アイコン
+                    Image(systemName: "gearshape.fill")
                         .foregroundColor(.white.opacity(0.3))
                 }
                 .menuStyle(.borderlessButton)
@@ -265,9 +263,7 @@ struct ContentView: View {
     }
     
     private var canSend: Bool {
-        // 💡 これ以上ないほどシンプルに：
         // 「テキストが空ではない」 OR 「画像が存在する」
-        // かつ「送信中ではない」
         let isInputNotEmpty = !inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let isImagePresent = appState.pendingImageUrl != nil
         
@@ -278,7 +274,7 @@ struct ContentView: View {
 
     private func sendEverything() {
         guard !inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || appState.pendingImageUrl != nil else {
-                return // ここで弾く
+                return
             }
         let question = inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines)
         let imageUrl = appState.pendingImageUrl
@@ -342,14 +338,14 @@ struct ContentView: View {
 
 struct NeonLaserDivider: View {
     var body: some View {
-        // 💡 SwiftUIの再描画の罠を抜けるため、NSView（AppKit）の世界にエスケープする
+        // SwiftUIの再描画の罠を抜けるため、NSView（AppKit）の世界にエスケープする
         NSGradientLayerViewWrapper()
             .frame(height: 1.5)
             .shadow(color: Color(red: 0.26, green: 0.52, blue: 0.96).opacity(0.4), radius: 3, y: 0)
     }
 }
 
-// 💡 AppKitのビューをSwiftUIで使えるようにするラッパー
+// AppKitのビューをSwiftUIで使えるようにするラッパー
 struct NSGradientLayerViewWrapper: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let containerView = NSView()
@@ -406,7 +402,7 @@ struct NSGradientLayerViewWrapper: NSViewRepresentable {
     }
 }
 
-// 💡 エラー解消のために追加：macOS用のすりガラス（VisualEffect）のラッパー
+// エラー解消のために追加：macOS用のすりガラス（VisualEffect）のラッパー
 struct ScreenLensVisualEffect: NSViewRepresentable {
     var material: NSVisualEffectView.Material
     var blendingMode: NSVisualEffectView.BlendingMode
@@ -432,7 +428,7 @@ func clearTempDirectory() {
     do {
         let fileURLs = try fileManager.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil)
         for url in fileURLs {
-            // これにより「ScreenLens_2026...」のような名前のファイルだけが対象になる
+            // 「ScreenLens_2026...」のような名前のファイルだけが対象になる
             if url.lastPathComponent.hasPrefix("ScreenLens_") {
                 try fileManager.removeItem(at: url)
             }

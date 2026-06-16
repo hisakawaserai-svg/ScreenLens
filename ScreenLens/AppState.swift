@@ -12,7 +12,7 @@ struct ChatMessage: Identifiable {
     let id = UUID()
     let isUser: Bool
     let text: String
-    // 💡 NSImage ではなく、ファイルが保存されている「URL」を持つように変更！
+    // NSImage ではなく、ファイルが保存されている「URL」を持つように変更！
     let imageUrl: URL?
 }
 
@@ -22,7 +22,7 @@ class AppState: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isProcessing: Bool = false
     
-    // 💡 送信前のスクショも「URL」で保持
+    // 送信前のスクショも「URL」で保持
     @Published var pendingImageUrl: URL?
     
     /// セッション開始時の処理
