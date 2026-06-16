@@ -17,6 +17,17 @@ struct ScreenLensApp: App {
     var body: some Scene {
         // 1. メニーバー常駐の設定（元の綺麗な設計をキープ！）
         MenuBarExtra("ScreenLens", systemImage: "camera") {
+            Button("アプリを開く") {
+                // 既存のウィンドウを探す
+                    if let window = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "main" }) {
+                        window.makeKeyAndOrderFront(nil)
+                        NSApp.activate(ignoringOtherApps: true)
+                    } else {
+                        // なければ開く
+                        openWindow(id: "main")
+                    }
+                }
+            Divider() // 区切り線
             Button("画像を解析する") {
                 appDelegate.analyzeScreen(appState: appState) {
                     openWindow(id: "main")
@@ -32,38 +43,31 @@ struct ScreenLensApp: App {
                     configureMacWindow()
                 }
         }
-        // 👇 タイトルバーを非表示にして、SafariやFinderみたいな「ただの四角いダサい枠」を消し去る
         .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
     }
     
     /// 開いたウインドウを検知して、右縦半分＆半透明にする処理
     private func configureMacWindow() {
-        // 💡 画面上に今開いた「main」ウインドウを探し出す
-        // タイトルバーを隠しているため、一工夫して取得します
         DispatchQueue.main.async {
-            guard let window = NSApplication.shared.windows.first(where: { $0.isVisible && $0.titleVisibility == .hidden }) else { return }
+            // 1. ウィンドウを特定し、identifierを明示的に付与しておく
+            guard let window = NSApplication.shared.windows.first(where: { $0.titleVisibility == .hidden }) else { return }
+            window.identifier = NSUserInterfaceItemIdentifier("main")
             
-            // ウインドウの枠線を消し、透明なキャンバスにする設定
-            window.backgroundColor = .clear
-            window.isOpaque = false
-            window.hasShadow = true
-            // アプリが非アクティブになっても、他のウインドウの手前に常に表示させたい場合はこれを有効に（お好みで）
-            // window.level = .floating
-            
-            // 💡 ディスプレイのサイズを取得して「作業の邪魔にならない右端の特等席」を計算
+            // 2. 座標計算
             if let screen = NSScreen.main {
                 let screenRect = screen.visibleFrame
-                
-                // 💡 半分ではなく、チャットや画像が綺麗に見える最小の「420ポイント」に固定！
                 let newWidth: CGFloat = 420
-                let newHeight = screenRect.height
+                let newHeight: CGFloat = 620 // 最小値を初期値として使うのが最も安定します
                 
-                // 画面の右端にぴったり吸着させる座標計算
-                let newX = screenRect.origin.x + screenRect.width - newWidth
-                let newY = screenRect.origin.y
+                let newX = screenRect.maxX - newWidth
+                let newY = screenRect.maxY - newHeight // 上から配置することで画面外にはみ出しません
                 
-                // 計算した座標にフィットさせる
+                // 3. サイズと位置を強制適用
                 window.setFrame(NSRect(x: newX, y: newY, width: newWidth, height: newHeight), display: true, animate: true)
+                
+                // 4. ユーザーに勝手にリサイズさせないための最小サイズ制約をコードで強制
+                window.minSize = NSSize(width: 420, height: 620)
             }
         }
     }

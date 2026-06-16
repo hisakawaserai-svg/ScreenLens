@@ -27,15 +27,9 @@ struct ContentView: View {
             
             ZStack {
                 // 💡 解決策：サイズに応じて背景を動的に切り替える
-                if isFullScreen {
-                    // 全画面の時は、裏の壁紙を隠すためにリッチな漆黒（固定）にする
-                    Color(red: 0.1, green: 0.1, blue: 0.12)
+                (isFullScreen ? Color(red: 0.1, green: 0.1, blue: 0.12) : Color.black.opacity(0.15))
                         .ignoresSafeArea()
-                } else {
-                    // 通常サイズ（小さい時）は、うっすら透けるダークレイヤー
-                    Color.black.opacity(0.15)
-                        .ignoresSafeArea()
-                }
+                        .animation(.easeInOut(duration: 0.5), value: isFullScreen)
                 
                 VStack(spacing: 0) {
                     // ヘッダー（全画面の時は少し不透明度を上げるか、そのままでもHUDなら締まります）
@@ -100,8 +94,11 @@ struct ContentView: View {
                     .zIndex(999)
                 }
             }
+                .padding(2)
+                .background(Color.clear)
         }
         .frame(minWidth: 420, minHeight: 620)
+        .contentShape(Rectangle())
     }
     
     // ーーー ヘッダー ーーー
@@ -215,6 +212,7 @@ struct ContentView: View {
                         Button {
                             try? FileManager.default.removeItem(at: pendingUrl)
                             appState.pendingImageUrl = nil
+                        
                         } label: { Image(systemName: "xmark.circle.fill").foregroundColor(.white).background(Color.black.clipShape(Circle())) }.buttonStyle(.plain).offset(x: 5, y: -5)
                     }
                     Text("送信待ちのスクショ").font(.caption).foregroundColor(.white.opacity(0.6))
@@ -247,11 +245,22 @@ struct ContentView: View {
         .padding(.top, 16).padding(.bottom, 24)
     }
     
-    // 以下、その他のヘルパーメソッド群（ロジック変更なし）はそのまま維持
-    private var canSend: Bool { (!inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || appState.pendingImageUrl != nil) && !isSending }
+    private var canSend: Bool {
+        // 💡 これ以上ないほどシンプルに：
+        // 「テキストが空ではない」 OR 「画像が存在する」
+        // かつ「送信中ではない」
+        let isInputNotEmpty = !inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let isImagePresent = appState.pendingImageUrl != nil
+        
+        return (isInputNotEmpty || isImagePresent) && !isSending
+    }
+    
     private func captureFromWindow() { appDelegate.analyzeScreen(appState: appState, openWindow: {}) }
 
     private func sendEverything() {
+        guard !inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || appState.pendingImageUrl != nil else {
+                return // ここで弾く
+            }
         let question = inputQuestion.trimmingCharacters(in: .whitespacesAndNewlines)
         let imageUrl = appState.pendingImageUrl
         let imageToBackground = imageUrl != nil ? NSImage(contentsOf: imageUrl!) : nil
