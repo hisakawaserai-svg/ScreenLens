@@ -70,7 +70,6 @@ Gemini API を利用して、スクリーンショットの内容を解析しま
 2. Xcodeで開く
 3. Build & Run
 4. Gemini API Keyを設定
-5. 
 ---
 
 ## 🛠️ 技術スタック
