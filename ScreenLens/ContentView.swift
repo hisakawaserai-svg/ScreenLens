@@ -131,7 +131,6 @@ struct ContentView: View {
                 }
                 .menuStyle(.borderlessButton)
             }
-            .padding(.trailing, 16)
 
             if appState.isProcessing || isSending { ProgressView().scaleEffect(0.7) }
         }
