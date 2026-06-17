@@ -214,7 +214,8 @@ struct ContentView: View {
                 }
                 if !message.text.isEmpty {
                     VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
-                        Text(message.text)
+                        BoldTextParser(text: message.text)
+                            .font(.system(.body, design: .rounded))
                             .font(.system(.body, design: .rounded))
                             .lineSpacing(5)
                             .textSelection(.enabled)
@@ -516,5 +517,34 @@ struct SettingsView: View {
         .toolbar {
             Button("閉じる") { dismiss() }
         }
+    }
+}
+
+// Markdown風の太字（**text**）を解析して表示するコンポーネント
+struct BoldTextParser: View {
+    let text: String
+    
+    var body: some View {
+        Text(parseToAttributedString(text))
+    }
+    
+    private func parseToAttributedString(_ input: String) -> AttributedString {
+        var fullString = AttributedString()
+        let parts = input.components(separatedBy: "**")
+        
+        for (index, part) in parts.enumerated() {
+            var attributedPart = AttributedString(part)
+            
+            // 奇数番目（**で囲まれた部分）を太字にする
+            if index % 2 != 0 {
+                attributedPart.font = .system(.body, design: .rounded).bold()
+                attributedPart.underlineStyle = .single
+            } else {
+                attributedPart.font = .system(.body, design: .rounded)
+            }
+            
+            fullString.append(attributedPart)
+        }
+        return fullString
     }
 }
