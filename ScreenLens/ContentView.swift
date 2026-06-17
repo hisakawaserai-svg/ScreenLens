@@ -118,6 +118,12 @@ struct ContentView: View {
                 isResizing = false
             }
         }
+        // ContentView.swift 内
+        .onAppear {
+            if let window = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "main" }) {
+                window.delegate = appDelegate 
+            }
+        }
     }
     
     // ーーー ヘッダー ーーー
